@@ -11,8 +11,8 @@ The preview uses generated media and demonstrates both partial and full alpha tr
 Use Python 3.10 or newer:
 
 ```bash
-git clone https://github.com/FastenSeatBeltWhileSeated/Opencv-add-logo-on-video.git
-cd Opencv-add-logo-on-video
+git clone https://github.com/FastenSeatBeltWhileSeated/opencv-video-overlay.git
+cd opencv-video-overlay
 python -m venv .venv
 ```
 
