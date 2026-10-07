@@ -1,18 +1,14 @@
 # OpenCV Video Overlay
 
-Python command-line utility for adding a transparent PNG logo to a video and exporting the result as an AVI file.
+A reusable Python utility and command-line application for blending transparent PNGs into videos.
 
-## Features
+![Synthetic video overlay example](docs/assets/synthetic-overlay.png)
 
-- Alpha blending, including partially transparent pixels.
-- Configurable logo position and dimensions.
-- Input frame-rate preservation, with a 30 FPS fallback when metadata is unavailable.
-- Validation of input video, logo channels, overlay bounds and output writer.
-- Resource cleanup when processing finishes or fails.
+The preview uses generated media and demonstrates both partial and full alpha transparency.
 
-## Installation
+## Install
 
-Use Python 3 and create a virtual environment:
+Use Python 3.10 or newer:
 
 ```bash
 git clone https://github.com/FastenSeatBeltWhileSeated/Opencv-add-logo-on-video.git
@@ -20,52 +16,64 @@ cd Opencv-add-logo-on-video
 python -m venv .venv
 ```
 
-Activate it with `source .venv/bin/activate` on Linux/macOS or `.venv\Scripts\Activate.ps1` on Windows PowerShell, then install:
+Activate with `source .venv/bin/activate` on Linux/macOS or `.venv\Scripts\Activate.ps1` in Windows PowerShell, then:
 
 ```bash
-python -m pip install -r requirements.txt
+python -m pip install -e .
 ```
 
-## Usage
-
-Supply your own video and PNG logo with an alpha channel:
+## Run a complete example
 
 ```bash
-python logo.py --input input.avi --output output.avi --logo logo.png
+python examples/synthetic_demo.py
 ```
 
-Adjust the overlay:
+This creates an input video, a transparent PNG and an overlaid output under `examples/generated/`. No external media is required.
+
+## Use your files
 
 ```bash
-python logo.py -i input.avi -o output.avi --logo logo.png --x 20 --y 20 --width 300 --height 100
+video-overlay --input input.avi --output output.avi --logo logo.png
+video-overlay -i input.avi -o output.avi --logo logo.png --x 20 --y 20 --width 300 --height 100
 ```
+
+Module entry point: `python -m video_overlay` with the same arguments.
 
 | Argument | Default | Purpose |
 | --- | --- | --- |
 | `-i / --input` | Required | Source video |
-| `-o / --output` | Required | Output AVI file |
+| `-o / --output` | Required | Output AVI |
 | `--logo` | `Logo.png` | Four-channel PNG |
-| `--x / --y` | `20 / 20` | Top-left position, in pixels |
+| `--x / --y` | `20 / 20` | Position in pixels |
 | `--width / --height` | `300 / 100` | Resized logo dimensions |
 
-The logo must fit completely inside the frame. Use a different output path: an existing output file may be overwritten.
+The logo must fit entirely within the frame. Output uses MJPG AVI and preserves source FPS when available, with a 30 FPS fallback. Audio is not copied. Input and output paths must differ; an existing output file may be replaced.
 
-## How blending works
+## Python API
 
-For each pixel in the logo region:
+```python
+from video_overlay import process_video
 
-```text
-output = video × (1 − alpha) + logo × alpha
-alpha = PNG alpha channel / 255
+frames = process_video("input.avi", "output.avi", "logo.png",
+                       x=20, y=20, width=300, height=100)
 ```
 
-## Scope
+## Structure
 
-This is a focused video-processing utility. It uses the MJPG codec and an AVI container, does not copy audio and does not include example input media.
+| Directory | Contents |
+| --- | --- |
+| `src/video_overlay/` | Reusable functions and CLI |
+| `examples/` | Self-contained synthetic demonstration |
+| `tests/` | Alpha, placement, bounds and video export checks |
+| `docs/` | Maintenance notes and generated preview |
 
-The maintenance update corrects undefined variables in the original script, loads the logo once, preserves partial transparency and handles empty or invalid inputs.
+The former `logo.py` root script is now an installable package. See [maintenance notes](docs/maintenance.md).
 
-## Validation
+## Test
 
-Verified with a generated AVI and PNG: frame count, dimensions, frame rate, overlay placement, partial-alpha blending, and invalid-input handling. Validation media is synthetic and is not an industrial deployment demonstration.
+```bash
+python -m pip install -e ".[test]"
+python -m pytest -q
+```
 
+Validation uses synthetic images and videos. This utility is a focused media-processing project.

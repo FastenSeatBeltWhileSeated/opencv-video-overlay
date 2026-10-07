@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "opencv-video-overlay"
+version = "0.1.0"
+description = "Transparent PNG overlays for videos using OpenCV"
+requires-python = ">=3.10"
+dependencies = ["opencv-python>=4,<5", "numpy>=1.23,<3"]
+
+[project.optional-dependencies]
+test = ["pytest>=7"]
+
+[project.scripts]
+video-overlay = "video_overlay.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,6 +1,5 @@
 """Add a transparent PNG overlay to a video using OpenCV."""
 
-import argparse
 from pathlib import Path
 
 import cv2
@@ -8,18 +7,24 @@ import numpy as np
 
 
 def load_logo(path, width, height):
+    if width <= 0 or height <= 0:
+        raise ValueError("Logo dimensions must be positive")
     image = cv2.imread(str(path), cv2.IMREAD_UNCHANGED)
     if image is None:
         raise ValueError(f"Cannot read logo: {path}")
     if image.ndim != 3 or image.shape[2] != 4:
         raise ValueError("Logo must have four channels (BGRA), including transparency")
-    if width <= 0 or height <= 0:
-        raise ValueError("Logo dimensions must be positive")
     return cv2.resize(image, (width, height))
 
 
 def overlay_logo(frame, logo, x, y):
     """Blend a BGRA logo into a BGR frame in place, preserving partial alpha."""
+    if (not isinstance(frame, np.ndarray) or frame.dtype != np.uint8
+            or frame.ndim != 3 or frame.shape[2] != 3 or frame.size == 0):
+        raise ValueError("Frame must be a nonempty uint8 BGR image")
+    if (not isinstance(logo, np.ndarray) or logo.dtype != np.uint8
+            or logo.ndim != 3 or logo.shape[2] != 4 or logo.size == 0):
+        raise ValueError("Logo must be a nonempty uint8 BGRA image")
     height, width = logo.shape[:2]
     if x < 0 or y < 0 or x + width > frame.shape[1] or y + height > frame.shape[0]:
         raise ValueError("Logo position and dimensions must fit inside the video frame")
@@ -33,6 +38,8 @@ def overlay_logo(frame, logo, x, y):
 def process_video(input_path, output_path, logo_path, x=20, y=20, width=300, height=100):
     if Path(input_path).resolve() == Path(output_path).resolve():
         raise ValueError("Input and output paths must be different")
+    if Path(output_path).suffix.lower() != ".avi":
+        raise ValueError("Output must use the .avi extension (MJPG codec)")
     logo = load_logo(logo_path, width, height)
     capture = cv2.VideoCapture(str(input_path))
     writer = None
@@ -64,24 +71,3 @@ def process_video(input_path, output_path, logo_path, x=20, y=20, width=300, hei
         if writer is not None:
             writer.release()
 
-
-def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("-i", "--input", required=True, help="Input video path")
-    parser.add_argument("-o", "--output", required=True, help="Output AVI path (MJPG)")
-    parser.add_argument("--logo", default="Logo.png", help="Transparent PNG (default: Logo.png)")
-    parser.add_argument("--x", type=int, default=20, help="Horizontal offset in pixels")
-    parser.add_argument("--y", type=int, default=20, help="Vertical offset in pixels")
-    parser.add_argument("--width", type=int, default=300, help="Logo width in pixels")
-    parser.add_argument("--height", type=int, default=100, help="Logo height in pixels")
-    args = parser.parse_args()
-    try:
-        frames = process_video(args.input, args.output, args.logo, args.x, args.y,
-                               args.width, args.height)
-    except ValueError as error:
-        parser.error(str(error))
-    print(f"Processed {frames} frames. Output: {args.output}")
-
-
-if __name__ == "__main__":
-    main()
